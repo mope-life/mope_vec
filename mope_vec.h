@@ -222,7 +222,7 @@ namespace mope
 
             // dot product
             template <typename S>
-            constexpr auto dot(const vec<N, S>& rhs) const
+            constexpr auto dot(const _vec<N, S>& rhs) const
             {
                 std::common_type_t<T, S> res = 0;
                 for (size_t i = 0; i < N; ++i)
@@ -232,7 +232,7 @@ namespace mope
 
             // cross product
             template <typename S>
-            constexpr auto cross(const vec<N, S>& rhs) const
+            constexpr auto cross(const _vec<N, S>& rhs) const
             {
                 static_assert(N > 2, "Cross product is not defined for n < 3.");
 
@@ -246,7 +246,7 @@ namespace mope
 
             // elementwise scaling
             template <typename S>
-            constexpr auto scaleby(const vec<N, S>& v) const
+            constexpr auto scaleby(const _vec<N, S>& v) const
             {
                 vec< N, std::common_type_t<T, S>> res;
                 for (size_t i = 0; i < N; ++i)
@@ -257,17 +257,15 @@ namespace mope
             // magnitude
             double magnitude() const
             {
-                const vec<N, double> v = static_cast<vec<N, double>>(*this);
-                double dot = v.dot(v);
-                return sqrt(dot);
+                double d = static_cast<double>(dot(*this));
+                return sqrt(d);
             }
 
             // magnitude as a float
             float magnitudef() const
             {
-                const vec<N, float> v = static_cast<vec<N, float>>(*this);
-                float dot = v.dot(v);
-                return sqrtf(dot);
+                float d = static_cast<float>(dot(*this));
+                return sqrtf(d);
             }
 
             // unit vector
