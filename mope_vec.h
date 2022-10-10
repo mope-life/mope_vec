@@ -257,7 +257,7 @@ namespace mope
             // magnitude
             double magnitude() const
             {
-                vec<N, double> v = static_cast<vec<N, double>>(*this);
+                const vec<N, double> v = static_cast<vec<N, double>>(*this);
                 double dot = v.dot(v);
                 return sqrt(dot);
             }
@@ -265,7 +265,7 @@ namespace mope
             // magnitude as a float
             float magnitudef() const
             {
-                vec<N, float> v = static_cast<vec<N, float>>(*this);
+                const vec<N, float> v = static_cast<vec<N, float>>(*this);
                 float dot = v.dot(v);
                 return sqrtf(dot);
             }
