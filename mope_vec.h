@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <iostream>
 #include <cassert>
+#include <array>
 #include <math.h>
 
 namespace mope
@@ -442,19 +443,20 @@ namespace mope
         return os;
     }
 
-    // common type of two vecs with different inner data types
-    template <size_t N, typename T1, typename T2>
-    struct std::common_type<mope::vec<N, T1>, mope::vec<N, T2>> {
-        using type = mope::vec<N, std::common_type_t<T1, T2>>;
-    };
-    // common type of a vec and a different data type
-    template <size_t N, typename T1, typename T2>
-    struct std::common_type<mope::vec<N, T1>, T2> {
-        using type = mope::vec<N, std::common_type_t<T1, T2>>;
-    };
-    // common type of a different data type and a vec
-    template <size_t N, typename T1, typename T2>
-    struct std::common_type<T1, mope::vec<N, T2>> {
-        using type = mope::vec<N, std::common_type_t<T1, T2>>;
-    };
 } // namespace mope
+
+// common type of two vecs with different inner data types
+template <size_t N, typename T1, typename T2>
+struct std::common_type<mope::vec<N, T1>, mope::vec<N, T2>> {
+    using type = mope::vec<N, std::common_type_t<T1, T2>>;
+};
+// common type of a vec and a different data type
+template <size_t N, typename T1, typename T2>
+struct std::common_type<mope::vec<N, T1>, T2> {
+    using type = mope::vec<N, std::common_type_t<T1, T2>>;
+};
+// common type of a different data type and a vec
+template <size_t N, typename T1, typename T2>
+struct std::common_type<T1, mope::vec<N, T2>> {
+    using type = mope::vec<N, std::common_type_t<T1, T2>>;
+};
