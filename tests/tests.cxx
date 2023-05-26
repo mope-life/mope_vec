@@ -1,6 +1,6 @@
 #include "CppUnitTest.h"
 
-#include "../mope_vec.h"
+#include "../mope_vec.hxx"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace mope;
