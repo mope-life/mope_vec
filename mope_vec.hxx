@@ -12,34 +12,34 @@ namespace mope
     template <size_t N, typename T> struct vec;
     template <size_t N, typename V> struct mat;
 
-    typedef vec<2, int>				vec2i;
-    typedef vec<3, int>				vec3i;
-    typedef vec<4, int>				vec4i;
-    typedef vec<2, float>			vec2f;
-    typedef vec<3, float>			vec3f;
-    typedef vec<4, float>			vec4f;
-    typedef vec<2, double>			vec2d;
-    typedef vec<3, double>			vec3d;
-    typedef vec<4, double>			vec4d;
-    typedef vec<2, unsigned int>   	vec2ui;
-    typedef vec<3, unsigned int>   	vec3ui;
-    typedef vec<4, unsigned int>    vec4ui;
-    typedef vec<2, uint8_t>			vec2b;
-    typedef vec<3, uint8_t>			vec3b;
-    typedef vec<4, uint8_t>			vec4b;
+    typedef vec<2, int>				    vec2i;
+    typedef vec<3, int>				    vec3i;
+    typedef vec<4, int>				    vec4i;
+    typedef vec<2, float>			    vec2f;
+    typedef vec<3, float>			    vec3f;
+    typedef vec<4, float>			    vec4f;
+    typedef vec<2, double>			    vec2d;
+    typedef vec<3, double>			    vec3d;
+    typedef vec<4, double>			    vec4d;
+    typedef vec<2, unsigned int>        vec2ui;
+    typedef vec<3, unsigned int>        vec3ui;
+    typedef vec<4, unsigned int>        vec4ui;
+    typedef vec<2, uint8_t>			    vec2b;
+    typedef vec<3, uint8_t>			    vec3b;
+    typedef vec<4, uint8_t>			    vec4b;
 
-    typedef mat<2, vec2i>			mat2i;
-    typedef mat<3, vec3i>			mat3i;
-    typedef mat<4, vec4i>			mat4i;
-    typedef mat<2, vec2f>			mat2f;
-    typedef mat<3, vec3f>			mat3f;
-    typedef mat<4, vec4f>			mat4f;
-    typedef mat<2, vec2d>			mat2d;
-    typedef mat<3, vec3d>			mat3d;
-    typedef mat<4, vec4d>			mat4d;
-    typedef mat<2, vec2ui>			mat2ui;
-    typedef mat<3, vec3ui>			mat3ui;
-    typedef mat<4, vec4ui>			mat4ui;
+    typedef mat<2, vec2i>			    mat2i;
+    typedef mat<3, vec3i>			    mat3i;
+    typedef mat<4, vec4i>			    mat4i;
+    typedef mat<2, vec2f>			    mat2f;
+    typedef mat<3, vec3f>			    mat3f;
+    typedef mat<4, vec4f>			    mat4f;
+    typedef mat<2, vec2d>			    mat2d;
+    typedef mat<3, vec3d>			    mat3d;
+    typedef mat<4, vec4d>			    mat4d;
+    typedef mat<2, vec2ui>			    mat2ui;
+    typedef mat<3, vec3ui>			    mat3ui;
+    typedef mat<4, vec4ui>			    mat4ui;
 
     namespace detail
     {
@@ -60,20 +60,23 @@ namespace mope
         struct _base
         {
         protected:
-            std::array<T, N> elements{ };
+            T elements[N]{ };
 
         public:
             constexpr _base() = default;
-            constexpr _base(const std::initializer_list<T>& L) {
+            constexpr _base(const std::initializer_list<T>& L)
+            {
                 L.size() <= N ? (void)0 : too_many_elements();
-                auto iter = L.begin( );
-                auto arr = elements.begin( );
-                for(
-                    auto iter = L.begin( ), arr = elements.begin( );
-                    iter < L.end( );
-                    std::advance( arr, 1 ), std::advance( iter, 1 )
-                )
-                    std::copy( iter, std::next( iter ), arr );
+                std::copy( L.begin( ), L.end( ), elements );
+            }
+
+            // access to underlying array
+            constexpr T* data() {
+                return elements;
+            }
+
+            constexpr const T* data() const {
+                return elements;
             }
 
             // explicit cast to different data type
@@ -91,6 +94,7 @@ namespace mope
             {
                 return elements[i];
             }
+
             constexpr const T& operator [] (const size_t& i) const
             {
                 return elements[i];
@@ -178,12 +182,12 @@ namespace mope
             // equality
             constexpr bool operator == (const Vec<N, T>& other) const
             {
-                return this->elements == other.elements;
+                return !std::memcmp( elements, other.elements, N * sizeof(T) );
             }
 
             constexpr bool operator != (const Vec<N, T>& other) const
             {
-                return this->elements != other.elements;
+                return !( ( *this ) == other );
             }
         }; // struct _base
 
@@ -313,15 +317,14 @@ namespace mope
 
             constexpr _mat(const std::initializer_list<T>& L)
             {
-                L.size() <= M * N ? (void)0 : too_many_elements();
+                L.size() <= M * N ? (void)0 : too_many_elements( );
                 auto iter = L.begin( );
-                size_t idx = 0;
-                for( size_t idx ; iter < L.end( ); ++idx )
-                {
-                    auto beg = iter;
-                    std::advance( iter, M );
-                    auto end = L.end( ) < iter ? L.end( ) : iter;
-                    std::copy( beg, end, ( *this )[idx].data( ) );
+                auto remaining = std::distance( iter, L.end( ) );
+                for( size_t idx = 0; remaining > 0; ++idx ) {
+                    auto dist = M < remaining ? M : remaining;
+                    std::copy( iter, std::next( iter, dist ), ( *this )[idx].data( ) );
+                    std::advance( iter, dist );
+                    remaining -= dist;
                 }
             }
 
@@ -342,8 +345,8 @@ namespace mope
             {
                 mat<P, vec<M, std::common_type_t<T, S>>> res;
                 for (size_t i = 0; i < M; ++i)
-                    for (size_t j = 0; j < N; j++)
-                        for (size_t k = 0; k < P; k++)
+                    for (size_t j = 0; j < N; ++j)
+                        for (size_t k = 0; k < P; ++k)
                             res[k][i] += (*this)[j][i] * rhs[k][j];
                 return res;
             }
