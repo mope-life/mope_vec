@@ -1,8 +1,39 @@
 #include "mope_vec.hxx"
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE( "Testing works", "[testing]") {
-    REQUIRE( 1 == 1 );
+#include <type_traits>
+
+TEST_CASE( "vecs and mats can be constructed and cast", "[construction]") {
+    SECTION( "default constructible" ) {
+        REQUIRE( std::is_default_constructible_v<mope::vec2i> );
+        REQUIRE( std::is_default_constructible_v<mope::mat2i> );
+    }
+	SECTION( "vecs and mats are copy constructible" ) {
+        REQUIRE( std::is_copy_constructible_v<mope::vec2i> );
+        REQUIRE( std::is_copy_constructible_v<mope::mat2i> );
+    }
+	SECTION( "vecs and mats copy assignable" ) {
+        REQUIRE( std::is_copy_assignable_v<mope::vec2i> );
+        REQUIRE( std::is_copy_assignable_v<mope::mat2i> );
+    }
+	SECTION( "vecs and mats move constructible" ) {
+        REQUIRE( std::is_move_constructible_v<mope::vec2i> );
+        REQUIRE( std::is_move_constructible_v<mope::mat2i> );
+    }
+	SECTION( "vecs and mats move assignable" ) {
+        REQUIRE( std::is_move_assignable_v<mope::vec2i> );
+        REQUIRE( std::is_move_assignable_v<mope::mat2i> );
+    }
+	SECTION( "vecs are convertible from lower dimensions" ) {
+        REQUIRE( std::is_convertible_v<mope::vec2i, mope::vec3i> );
+    }
+	SECTION( "vecs are not convertible from higher dimensions" ) {
+        REQUIRE_FALSE( std::is_constructible_v<mope::vec2i, mope::vec3i> );
+    }
+	SECTION( "vecs and mats are explicitly convertible to another field type" ) {
+        REQUIRE_FALSE( std::is_convertible_v<mope::vec2i, mope::vec2f> );
+		REQUIRE( std::is_constructible_v<mope::vec2f, mope::vec2i> );
+    }
 }
 
 /*
