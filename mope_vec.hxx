@@ -147,10 +147,8 @@ namespace mope
             template <typename S>
             constexpr auto& operator += (const std::initializer_list<S>& L)
             {
-                static_assert(L.size() <= N);
-                size_t i = 0;
-                for (auto iter = L.begin(); iter != L.end(); iter++)
-                    (*this)[++i] += *iter;
+                L.size() <= N ? (void)0 : too_many_elements();
+                *this += Vec<N, S>{ L };
                 return *this;
             }
 
@@ -165,10 +163,8 @@ namespace mope
             template <typename S>
             constexpr auto& operator -= (const std::initializer_list<S>& L)
             {
-                static_assert(L.size() <= N);
-                size_t i = 0;
-                for (auto iter = L.begin(); iter != L.end(); iter++)
-                    (*this)[++i] -= *iter;
+                L.size() <= N ? (void)0 : too_many_elements();
+                *this -= Vec<N, S>{ L };
                 return *this;
             }
 
