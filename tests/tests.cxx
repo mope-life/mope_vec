@@ -4,7 +4,6 @@
 #include <type_traits>
 
 TEST_CASE( "vecs and mats have desired type traits", "[type traits]") {
-
 	SECTION( "vecs and mats are default constructible" ) {
 		REQUIRE( std::is_default_constructible_v<mope::vec2i> );
 		REQUIRE( std::is_default_constructible_v<mope::mat2i> );
@@ -45,7 +44,6 @@ TEST_CASE( "vecs and mats have desired type traits", "[type traits]") {
 }
 
 TEST_CASE( "preliminary conditions for testing are met", "[preliminary]") {
-
 	constexpr mope::vec2i x{ 1, 2 };
 	constexpr mope::mat2i A{ 1, 3, 2, 4 };
 
@@ -68,11 +66,11 @@ TEST_CASE( "preliminary conditions for testing are met", "[preliminary]") {
 	}
 
 	SECTION( "basic mat construction works as expected" ) {
-        constexpr mope::vec2i expected0{ 1, 3 };
-        constexpr mope::vec2i expected1{ 2, 4 };
+        constexpr mope::vec2i expected_0{ 1, 3 };
+        constexpr mope::vec2i expected_1{ 2, 4 };
         auto dat = A.data( );
-        REQUIRE( dat[0] == expected0 );
-        REQUIRE( dat[1] == expected1 );
+        REQUIRE( dat[0] == expected_0 );
+        REQUIRE( dat[1] == expected_1 );
     }
 
 	SECTION( "mat equality and inequality work as expected" ) {
@@ -88,15 +86,11 @@ TEST_CASE( "preliminary conditions for testing are met", "[preliminary]") {
 	}
 
 	SECTION( "packed and unpacked mat construction give the same results" ) {
-        constexpr mope::mat2i B{
-            { 1, 3 },
-            { 2, 4 }
-        };
+        constexpr mope::mat2i B{ { 1, 3 }, { 2, 4 } };
         REQUIRE( A == B );
     }
 
     SECTION( "copying and moving work as expected") {
-
 		constexpr mope::vec2i x_expected{ 1, 2 };
 		constexpr mope::mat2i A_expected{ 1, 3, 2, 4 };
 
@@ -134,147 +128,134 @@ TEST_CASE( "preliminary conditions for testing are met", "[preliminary]") {
 	}
 }
 
-TEST_CASE( "vector arithmetic works as expected", "[vector arithmetic]" ) {
+TEST_CASE( "common operations work as expected", "[common operations]" ) {
+	constexpr mope::vec3i x{ 0, 1, 2 };
+    constexpr mope::vec3i y{ 1, 2, 3 };
+	constexpr mope::mat3i A{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+	constexpr mope::mat3i B{ 6, 7, 8, 3, 4, 5, 0, 1, 2 };
+    mope::vec3i x_copy{ x };
+    mope::mat3i A_copy{ A };
+
+    SECTION( "addition works as expected" ) {
+    	constexpr mope::vec3i x_plus_y{ 1, 3, 5 };
+		constexpr mope::mat3i A_plus_B{ 6, 8, 10, 6, 8, 10, 6, 8, 10 };
+
+		SECTION( "sum is correct" ) {
+            REQUIRE( x + y == x_plus_y );
+            REQUIRE( y + x == x_plus_y );
+            REQUIRE( A + B == A_plus_B );
+            REQUIRE( B + A == A_plus_B );
+        }
+
+        SECTION( "addition-assignment is correct" ) {
+			x_copy += y;
+            REQUIRE( x_copy == x_plus_y );
+            A_copy += B;
+            REQUIRE( A_copy == A_plus_B );
+        }
+    }
+
+	SECTION( "subtraction works as expected" ) {
+    	constexpr mope::vec3i x_minus_y{ -1, -1, -1 };
+		constexpr mope::vec3i y_minus_x{ 1, 1, 1 };
+	    constexpr mope::vec3i minus_x{ 0, -1, -2 };
+        constexpr mope::mat3i B_minus_A{ 6, 6, 6, 0, 0, 0, -6, -6, -6 };
+        constexpr mope::mat3i A_minus_B{ -6, -6, -6, 0, 0, 0, 6, 6, 6 };
+        constexpr mope::mat3i minus_A{ 0, -1, -2, -3, -4, -5, -6, -7, -8 };
+
+        SECTION( "difference is correct" ) {
+            REQUIRE( x - y == x_minus_y );
+            REQUIRE( y - x == y_minus_x );
+            REQUIRE( A - B == A_minus_B );
+            REQUIRE( B - A == B_minus_A );
+        }
+
+        SECTION( "subtraction-assignment is correct" ) {
+			x_copy -= y;
+            REQUIRE( x_copy == x_minus_y );
+            A_copy -= B;
+            REQUIRE( A_copy == A_minus_B );
+        }
+
+        SECTION( "negation is correct" ) {
+            REQUIRE( -x == minus_x );
+            REQUIRE( -A == minus_A );
+        }
+    }
+
+	SECTION( "scalar multiplication works as expected" ) {
+		constexpr mope::vec3i two_times_x{ 0, 2, 4};
+		constexpr mope::mat3i two_times_A{ 0, 2, 4, 6, 8, 10, 12, 14, 16 };
+
+		SECTION( "product is correct" ) {
+            REQUIRE( 2 * x == two_times_x );
+            REQUIRE( x * 2 == two_times_x );
+            REQUIRE( 2 * A == two_times_A );
+            REQUIRE( A * 2 == two_times_A );
+        }
+
+        SECTION( "scalar-multiplication-assignment is correct" ) {
+            x_copy *= 2;
+            REQUIRE( x_copy == two_times_x );
+            A_copy *= 2;
+            REQUIRE( A_copy == two_times_A );
+        }
+	}
+}
+
+TEST_CASE( "vector operations work as expected", "[vector operations]" ) {
     constexpr mope::vec3i x{ 0, 1, 2 };
     constexpr mope::vec3i y{ 1, 2, 3 };
-	mope::vec3i w = x;
-
-    SECTION( "addition is correct" ) {
-		constexpr mope::vec3i expected{ 1, 3, 5 };
-		REQUIRE(x + y == expected);
-		REQUIRE(y + x == expected);
-	}
-
-	SECTION( "addition-assignment is correct" ) {
-        constexpr mope::vec3i expected{ 1, 3, 5 };
-        w += y;
-        REQUIRE( w == expected );
-    }
-
-    SECTION( "subtraction is correct" ) {
-		constexpr mope::vec3i expected0{ 1, 1, 1 };
-		constexpr mope::vec3i expected1{ -1, -1, -1 };
-		REQUIRE(y - x == expected0);
-		REQUIRE(x - y == expected1);
-	}
-
-	SECTION( "subtraction-assignment is correct" ) {
-        constexpr mope::vec3i expected{ -1, -1, -1 };
-        w -= y;
-        REQUIRE( w == expected );
-    }
-	
-	SECTION( "negation is correct" ) {
-		constexpr mope::vec3i expected{ -1, -2, -3 };
-		REQUIRE(-y == expected);
-	}
-
-	SECTION( "scalar multiplication is correct" ) {
-		constexpr mope::vec3i expected{ 0, 2, 4};
-		REQUIRE(2 * x == expected);
-		REQUIRE(x * 2 == expected);
-	}
 
 	SECTION( "dot product is correct" ) {
-		constexpr int expected{ 8 };
-		REQUIRE(x.dot(y) == expected);
-		REQUIRE(y.dot(x) == expected);
+		constexpr int x_dot_y{ 8 };
+		REQUIRE( x.dot(y) == x_dot_y );
+		REQUIRE( y.dot(x) == x_dot_y );
 	}
 
 	SECTION( "cross product is correct" ) {
-		constexpr mope::vec3i expected{ -1, 2, -1 };
-		REQUIRE(x.cross(y) == expected);
+		constexpr mope::vec3i x_cross_y{ -1, 2, -1 };
+		REQUIRE(x.cross(y) == x_cross_y);
 	}
 
-	SECTION( "unit vector is correct" ) {	
-		const mope::vec3d expected{ 0.0, 1.0 / std::sqrt(5), 2.0 / std::sqrt(5) };
-		const mope::vec3f expectedf{ 0.f, 1.f / std::sqrt(5.f), 2.f / std::sqrt(5.f) };
-		REQUIRE(x.unit() == expected);
-		REQUIRE(x.unitf() == expectedf);
+	SECTION( "magnitude is correct" ) {
+        const double x_magnitude = std::sqrt( 5 );
+        const float x_magnitudef = std::sqrt( 5.f );
+        REQUIRE( x.magnitude() == x_magnitude );
+        REQUIRE( x.magnitudef() == x_magnitudef );
+    }
+
+    SECTION( "unit vector is correct" ) {
+        const mope::vec3d x_unit{ 0.0, 1.0 / std::sqrt( 5 ), 2.0 / std::sqrt( 5 ) };
+        const mope::vec3f x_unitf{ 0.f, 1.f / std::sqrt( 5.f ), 2.f / std::sqrt( 5.f ) };
+        REQUIRE(x.unit() == x_unit);
+		REQUIRE(x.unitf() == x_unitf);
 	}
 }
 
-/*
+TEST_CASE( "matrix operations work as expected", "[matrix operations]") {
+	constexpr mope::mat3i A{ 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+	constexpr mope::mat3i B{ 6, 7, 8, 3, 4, 5, 0, 1, 2 };
 
+	SECTION( "matrix-matrix multiplication is correct" ) {
+        constexpr mope::mat3i A_times_B{ 69, 90, 111, 42, 54, 66, 15, 18, 21 };
+        REQUIRE( A * B == A_times_B );
+    }
 
-	TEST_CLASS(MatrixArithmetic)
-	{
-		mat3i m{
-			0, 1, 2,
-			3, 4, 5,
-			6, 7, 8
-		};
+	SECTION( "matrix-vector multiplication is correct" ) {
+		constexpr mope::vec3i x{ 1, 2, 3 };
+		constexpr mope::vec3i A_times_x{ 24, 30, 36 };
+        REQUIRE( A * x == A_times_x );
+    }
 
-		mat3i n{
-			6, 7, 8,
-			3, 4, 5,
-			0, 1, 2
-		};
+    SECTION( "identity behaves as expected" ) {
+        constexpr mope::mat3i I = mope::mat3i::identity( );
+		REQUIRE( A * I == A);
+		REQUIRE( I * A == A);
+    }
 
-		TEST_METHOD(Addition)
-		{
-			mat3i expected{
-				6, 8, 10,
-				6, 8, 10,
-				6, 8, 10
-			};
-
-			Assert::AreEqual(expected, m + n);
-			Assert::AreEqual(expected, n + m);
-		}
-
-		TEST_METHOD(Subtraction)
-		{
-			mat3i expected{
-				6, 6, 6,
-				0, 0, 0,
-				-6, -6, -6
-			};
-
-			Assert::AreEqual(expected, n - m);
-			Assert::AreEqual(-expected, m - n);
-		}
-
-		TEST_METHOD(MatrixMatrixMultiplication)
-		{
-			mat3i expected{
-				69, 90, 111,
-				42, 54, 66,
-				15, 18, 21
-			};
-
-			Assert::AreEqual(expected, m * n);
-		}
-
-		TEST_METHOD(MatrixVectorMultiplication)
-		{
-			vec3i v{ 1, 2, 3 };
-			vec3i expected{
-				24, 30, 36
-			};
-
-			Assert::AreEqual(expected, m * v);
-		}
-
-		TEST_METHOD(Identity)
-		{
-			mat3i I = mat3i::identity();
-
-			Assert::AreEqual(m, m * I);
-			Assert::AreEqual(m, I * m);
-		}
-
-		TEST_METHOD(Transpose)
-		{
-			mat3i expected = {
-				0, 3, 6,
-				1, 4, 7,
-				2, 5, 8
-			};
-
-			Assert::AreEqual(expected, m.transpose());
-		}
-	};
+	SECTION( "transpose is correct" ) {
+        constexpr mope::mat3i A_transpose{ 0, 3, 6, 1, 4, 7, 2, 5, 8 };
+        REQUIRE( A.transpose( ) == A_transpose );
+    }
 }
-
-*/
