@@ -2,7 +2,6 @@
 
 #include <type_traits>
 #include <iostream>
-#include <cassert>
 #include <array>
 #include <math.h>
 
@@ -58,7 +57,7 @@ namespace mope
 
             constexpr _base() = default;
             constexpr _base(const std::initializer_list<T>& L) {
-                assert(L.size() <= N);
+                static_assert(L.size() <= N);
                 std::copy(L.begin(), L.end(), elements);
             }
 
@@ -401,7 +400,7 @@ namespace mope
 
         constexpr mat(const std::initializer_list<T>& L)
         {
-            assert(L.size() <= N * M);
+            static_assert(L.size() <= N * M);
             auto iter = L.begin();
             for (size_t idx = 0; idx < N; idx++) {
                 std::copy(iter, std::next(iter, M), (*this)[idx].elements);
@@ -409,7 +408,14 @@ namespace mope
             }
         }
 
-        constexpr static std::enable_if_t<M == N, mat<N, vec<N, T>>> identity()
+        using square_mat = std::enable_if_t<M == N, mat<N, vec<N, T>>>;
+
+        constexpr square_mat inverse()
+        {
+
+        }
+
+        constexpr static square_mat identity()
         {
             mat<N, vec<N, T>> res{};
             for (size_t i = 0; i < N; ++i)

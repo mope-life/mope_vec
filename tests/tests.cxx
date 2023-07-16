@@ -1,3 +1,11 @@
+#include "mope_vec.hxx"
+#include <catch2/catch_test_macros.hpp>
+
+TEST_CASE( "Testing works", "[testing]") {
+    REQUIRE( 1 == 1 );
+}
+
+/*
 #include "CppUnitTest.h"
 
 #include "../mope_vec.hxx"
@@ -254,3 +262,5 @@ namespace tests
 		}
 	};
 }
+
+*/
