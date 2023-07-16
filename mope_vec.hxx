@@ -3,7 +3,9 @@
 #include <type_traits>
 #include <iostream>
 #include <array>
-#include <math.h>
+#include <cmath>
+#include <cstring>
+#include <cassert>
 
 namespace mope
 {
@@ -19,9 +21,9 @@ namespace mope
     typedef vec<2, double>			vec2d;
     typedef vec<3, double>			vec3d;
     typedef vec<4, double>			vec4d;
-    typedef vec<2, uint32_t>    	vec2ui;
-    typedef vec<3, uint32_t>    	vec3ui;
-    typedef vec<4, uint32_t>	    vec4ui;
+    typedef vec<2, unsigned int>   	vec2ui;
+    typedef vec<3, unsigned int>   	vec3ui;
+    typedef vec<4, unsigned int>    vec4ui;
     typedef vec<2, uint8_t>			vec2b;
     typedef vec<3, uint8_t>			vec3b;
     typedef vec<4, uint8_t>			vec4b;
@@ -57,7 +59,7 @@ namespace mope
 
             constexpr _base() = default;
             constexpr _base(const std::initializer_list<T>& L) {
-                static_assert(L.size() <= N);
+                assert(L.size() <= N);
                 std::copy(L.begin(), L.end(), elements);
             }
 
@@ -167,8 +169,9 @@ namespace mope
             // equality
             constexpr bool operator == (const Vec<N, T>& other) const
             {
-                return !memcmp(this->elements, other.elements, N * sizeof(T));
+                return !std::memcmp(this->elements, other.elements, N * sizeof(T));
             }
+
             constexpr bool operator != (const Vec<N, T>& other) const
             {
                 return !(*this == other);
@@ -181,6 +184,14 @@ namespace mope
         {
             return rhs * lhs;
         }
+
+        // Left-multiplication by unsigned int scalar.
+        template <size_t N, typename T, template <size_t, typename> class Vec>
+        constexpr auto operator * (unsigned int lhs, const _base<N, T, Vec>& rhs)
+        {
+            return rhs * lhs;
+        }
+
         // Left-multiplication by float scalar.
         template <size_t N, typename T, template <size_t, typename> class Vec>
         constexpr auto operator * (float lhs, const _base<N, T, Vec>& rhs)
@@ -258,14 +269,14 @@ namespace mope
             double magnitude() const
             {
                 double d = static_cast<double>(dot(*this));
-                return sqrt(d);
+                return std::sqrt(d);
             }
 
             // magnitude as a float
             float magnitudef() const
             {
                 float d = static_cast<float>(dot(*this));
-                return sqrtf(d);
+                return std::sqrt(d);
             }
 
             // unit vector
@@ -287,7 +298,16 @@ namespace mope
         struct _mat : public _base<N, vec<M, T>, mat>
         {
             using _base<N, vec<M, T>, mat>::_base;
-            using _base<N, vec<M, T>, mat>::operator*;
+
+            constexpr _mat(const std::initializer_list<T>& L)
+            {
+                assert(L.size() <= N * M);
+                auto iter = L.begin();
+                for (size_t idx = 0; idx < N; idx++) {
+                    std::copy(iter, std::next(iter, M), (*this)[idx].elements);
+                    std::advance(iter, M);
+                }
+            }
 
             // matrix - vector multiplication
             template <typename S>
@@ -312,6 +332,8 @@ namespace mope
                 return res;
             }
 
+            using _base<N, vec<M, T>, mat>::operator*;
+
             // transpose
             constexpr auto transpose() const
             {
@@ -330,6 +352,22 @@ namespace mope
                     for (size_t i = 0; i < M; ++i)
                         dat[j * N + i] = (*this)[j][i];
                 return dat;
+            }
+
+            // special features square matrices
+            using square_mat = std::enable_if_t<M == N, mat<N, vec<N, T>>>;
+
+            constexpr square_mat inverse()
+            {
+
+            }
+
+            constexpr static square_mat identity()
+            {
+                mat<N, vec<N, T>> res{};
+                for (size_t i = 0; i < N; ++i)
+                    res[i][i] = static_cast<T>(1);
+                return res;
             }
         }; // struct _mat
     } // anonymous namespace
@@ -397,32 +435,12 @@ namespace mope
     struct mat<N, vec<M, T>> : public _mat<M, N, T>
     {
         using _mat<M, N, T>::_mat;
-
-        constexpr mat(const std::initializer_list<T>& L)
-        {
-            static_assert(L.size() <= N * M);
-            auto iter = L.begin();
-            for (size_t idx = 0; idx < N; idx++) {
-                std::copy(iter, std::next(iter, M), (*this)[idx].elements);
-                std::advance(iter, M);
-            }
-        }
-
-        using square_mat = std::enable_if_t<M == N, mat<N, vec<N, T>>>;
-
-        constexpr square_mat inverse()
-        {
-
-        }
-
-        constexpr static square_mat identity()
-        {
-            mat<N, vec<N, T>> res{};
-            for (size_t i = 0; i < N; ++i)
-                res[i][i] = static_cast<T>(1);
-            return res;
-        }
     };
+
+    // partial specialization allows:
+    // mat<2, ve<2, int>>
+    // absense of other partial specializations prevents things like:
+    // mat<2, int> m;
 
     /*========================================================================*\
     |  Conveniences                                                            |
@@ -448,7 +466,6 @@ namespace mope
         os << ")";
         return os;
     }
-
 } // namespace mope
 
 // common type of two vecs with different inner data types
