@@ -6,12 +6,6 @@
 #include <cmath>
 #include <cstring>
 
-namespace
-{
-    // this non-constexpr function is called from constructors in order
-    // to trigger a compiler error
-    void too_many_elements( ){ }
-}
 
 namespace mope
 {
@@ -47,8 +41,12 @@ namespace mope
     typedef mat<3, vec3ui>			mat3ui;
     typedef mat<4, vec4ui>			mat4ui;
 
-    namespace
+    namespace detail
     {
+        // this non-constexpr function is called from constructors in order
+        // to trigger a compiler error
+        void too_many_elements( ){ }
+
         /*====================================================================*\
         |  _base:                                                              |
         |  Contains operations common to both vectors and matrices             |
@@ -392,7 +390,7 @@ namespace mope
                 return res;
             }
         }; // struct _mat
-    } // anonymous namespace
+    } // namespace detail
 
     /*========================================================================*\
     |  vec                                                                     |
@@ -400,16 +398,16 @@ namespace mope
 
     // N-dimensional vector
     template <size_t N, typename T>
-    struct vec : public _vec<N, T>
+    struct vec : public detail::_vec<N, T>
     {
-        using _vec<N, T>::_vec;
+        using detail::_vec<N, T>::_vec;
     };
 
     // 2-dimensional vector
     template <class T>
-    struct vec<2, T> : public _vec<2, T>
+    struct vec<2, T> : public detail::_vec<2, T>
     {
-        using _vec<2, T>::_vec;
+        using detail::_vec<2, T>::_vec;
 
         constexpr T& x() { return (*this)[0]; }
         constexpr T& y() { return (*this)[1]; }
@@ -419,9 +417,9 @@ namespace mope
 
     // 3-dimensional vector
     template <class T>
-    struct vec<3, T> : public _vec<3, T>
+    struct vec<3, T> : public detail::_vec<3, T>
     {
-        using _vec<3, T>::_vec;
+        using detail::_vec<3, T>::_vec;
 
         constexpr T& x() { return (*this)[0]; }
         constexpr T& y() { return (*this)[1]; }
@@ -433,9 +431,9 @@ namespace mope
 
     // 4-dimensional vector
     template <class T>
-    struct vec<4, T> : public _vec<4, T>
+    struct vec<4, T> : public detail::_vec<4, T>
     {
-        using _vec<4, T>::_vec;
+        using detail::_vec<4, T>::_vec;
 
         constexpr T& x() { return (*this)[0]; }
         constexpr T& y() { return (*this)[1]; }
@@ -454,9 +452,9 @@ namespace mope
 
     // Column-major matrix class
     template <size_t M, size_t N, typename T>
-    struct mat<N, vec<M, T>> : public _mat<M, N, T>
+    struct mat<N, vec<M, T>> : public detail::_mat<M, N, T>
     {
-        using _mat<M, N, T>::_mat;
+        using detail::_mat<M, N, T>::_mat;
     };
 
     // partial specialization allows:
@@ -470,7 +468,7 @@ namespace mope
 
     // Stream printing
     template <size_t N, typename T, template <size_t, typename> class Vec>
-    std::ostream& operator<<(std::ostream& os, const _base<N, T, Vec>& v) {
+    std::ostream& operator<<(std::ostream& os, const detail::_base<N, T, Vec>& v) {
         os << "( ";
         for (size_t i = 0; i < N; ++i) {
             os << v[i] << " ";
@@ -480,7 +478,7 @@ namespace mope
     }
     // Stream printing (wide)
     template <size_t N, typename T, template <size_t, typename> class Vec>
-    std::wostream& operator<<(std::wostream& os, const _base<N, T, Vec>& v) {
+    std::wostream& operator<<(std::wostream& os, const detail::_base<N, T, Vec>& v) {
         os << "( ";
         for (size_t i = 0; i < N; ++i) {
             os << v[i] << " ";
