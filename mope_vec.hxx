@@ -55,12 +55,21 @@ namespace mope
         template <size_t N, typename T, template <size_t, typename> class Vec>
         struct _base
         {
-            T elements[N]{};
+        protected:
+            std::array<T, N> elements;
 
+        public:
             constexpr _base() = default;
             constexpr _base(const std::initializer_list<T>& L) {
                 assert(L.size() <= N);
-                std::copy(L.begin(), L.end(), elements);
+                auto iter = L.begin( );
+                auto arr = elements.begin( );
+                for(
+                    auto iter = L.begin( ), arr = elements.begin( );
+                    iter < L.end( );
+                    std::advance( arr, 1 ), std::advance( iter, 1 )
+                )
+                    std::copy( iter, std::next( iter ), arr );
             }
 
             // explicit cast to different data type
@@ -169,12 +178,12 @@ namespace mope
             // equality
             constexpr bool operator == (const Vec<N, T>& other) const
             {
-                return !std::memcmp(this->elements, other.elements, N * sizeof(T));
+                return this->elements == other.elements;
             }
 
             constexpr bool operator != (const Vec<N, T>& other) const
             {
-                return !(*this == other);
+                return this->elements != other.elements;
             }
         }; // struct _base
 
@@ -211,18 +220,25 @@ namespace mope
             using _base<N, T, vec>::_base;
 
             // implicit cast to higher dimensions
-            template <size_t P>
-            constexpr operator std::enable_if_t<P >= N, vec<P, T>>() const
+            template <
+                size_t P,
+                typename PreventCastToLowerDimension = std::enable_if_t<P >= N>>
+            constexpr operator vec<P, T>() const
             {
                 vec<P, T> res;
                 for (size_t i = 0; i < N; ++i)
                     res[i] = (*this)[i];
+                for( size_t i = N; i < P;  ++i)
+                    res[i] = 0;
                 return res;
             }
 
             // explicit cast to different data type and higher dimension
-            template <size_t P, typename S>
-            constexpr explicit operator std::enable_if_t<P >= N, vec<P, S>>() const
+            template <
+                size_t P,
+                typename S,
+                typename PreventCastToLowerDimension = std::enable_if_t<P >= N>>
+            constexpr explicit operator vec<P, S>() const
             {
                 return static_cast<vec<P, S>>(static_cast<vec<N, S>>(*this));
             }
@@ -297,11 +313,15 @@ namespace mope
 
             constexpr _mat(const std::initializer_list<T>& L)
             {
-                assert(L.size() <= N * M);
-                auto iter = L.begin();
-                for (size_t idx = 0; idx < N; idx++) {
-                    std::copy(iter, std::next(iter, M), (*this)[idx].elements);
-                    std::advance(iter, M);
+                assert( L.size( ) <= M * N );
+                auto iter = L.begin( );
+                size_t idx = 0;
+                for( size_t idx ; iter < L.end( ); ++idx )
+                {
+                    auto beg = iter;
+                    std::advance( iter, M );
+                    auto end = L.end( ) < iter ? L.end( ) : iter;
+                    std::copy( beg, end, ( *this )[idx].data( ) );
                 }
             }
 
