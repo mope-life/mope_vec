@@ -5,7 +5,13 @@
 #include <array>
 #include <cmath>
 #include <cstring>
-#include <cassert>
+
+namespace
+{
+    // this non-constexpr function is called from constructors in order
+    // to trigger a compiler error
+    void too_many_elements( ){ }
+}
 
 namespace mope
 {
@@ -56,12 +62,12 @@ namespace mope
         struct _base
         {
         protected:
-            std::array<T, N> elements;
+            std::array<T, N> elements{ };
 
         public:
             constexpr _base() = default;
             constexpr _base(const std::initializer_list<T>& L) {
-                assert(L.size() <= N);
+                L.size() <= N ? (void)0 : too_many_elements();
                 auto iter = L.begin( );
                 auto arr = elements.begin( );
                 for(
@@ -313,7 +319,7 @@ namespace mope
 
             constexpr _mat(const std::initializer_list<T>& L)
             {
-                assert( L.size( ) <= M * N );
+                L.size() <= M * N ? (void)0 : too_many_elements();
                 auto iter = L.begin( );
                 size_t idx = 0;
                 for( size_t idx ; iter < L.end( ); ++idx )
