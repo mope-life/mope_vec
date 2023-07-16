@@ -211,10 +211,8 @@ namespace mope
             using _base<N, T, vec>::_base;
 
             // implicit cast to higher dimensions
-            template <
-                size_t P,
-                typename PreventCastToLowerDimension = std::enable_if_t<P >= N> >
-            constexpr operator vec<P, T>() const
+            template <size_t P>
+            constexpr operator std::enable_if_t<P >= N, vec<P, T>>() const
             {
                 vec<P, T> res;
                 for (size_t i = 0; i < N; ++i)
@@ -223,10 +221,8 @@ namespace mope
             }
 
             // explicit cast to different data type and higher dimension
-            template <
-                size_t P, typename S,
-                typename PreventCastToLowerDimension = std::enable_if_t<P >= N> >
-            constexpr explicit operator vec<P, S>() const
+            template <size_t P, typename S>
+            constexpr explicit operator std::enable_if_t<P >= N, vec<P, S>>() const
             {
                 return static_cast<vec<P, S>>(static_cast<vec<N, S>>(*this));
             }
