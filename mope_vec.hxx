@@ -3,6 +3,8 @@
 #include <type_traits>
 #include <iostream>
 #include <array>
+#include <vector>
+#include <functional>
 #include <cmath>
 #include <cstring>
 
@@ -40,6 +42,30 @@ namespace mope
     typedef mat<2, vec2ui>			    mat2ui;
     typedef mat<3, vec3ui>			    mat3ui;
     typedef mat<4, vec4ui>			    mat4ui;
+
+    namespace detail
+    {
+
+        template <typename T>
+        struct is_field_helper
+            : public std::conditional_t<std::is_floating_point_v<T>, std::true_type, std::false_type>
+        { };
+
+        // coming soon
+        // struct fraction;
+        // template <>
+        // struct is_field_helper<fraction>
+        //     : public std::true_type
+        // { };
+    } // namespace detail
+
+    template <typename T>
+    struct is_field
+        : public detail::is_field_helper<std::remove_cv_t<T>>
+    { };
+
+    template <typename T>
+    inline constexpr bool is_field_v = is_field<T>::value;
 
     namespace detail
     {
@@ -313,7 +339,8 @@ namespace mope
         template <size_t M, size_t N, typename T>
         struct _mat : public _base<N, vec<M, T>, mat>
         {
-            using _base<N, vec<M, T>, mat>::_base;
+            using Col = vec<M, T>;
+            using _base<N, Col, mat>::_base;
 
             constexpr _mat(const std::initializer_list<T>& L)
             {
@@ -327,6 +354,8 @@ namespace mope
                     remaining -= dist;
                 }
             }
+
+            using _base<N, Col, mat>::operator*;
 
             // matrix - vector multiplication
             template <typename S>
@@ -351,8 +380,6 @@ namespace mope
                 return res;
             }
 
-            using _base<N, vec<M, T>, mat>::operator*;
-
             // transpose
             constexpr auto transpose() const
             {
@@ -373,17 +400,149 @@ namespace mope
                 return dat;
             }
 
-            // special features square matrices
-            using square_mat = std::enable_if_t<M == N, mat<N, vec<N, T>>>;
+            // these might come in handy
+            using row_op = std::function<void( Col& )>;
 
-            constexpr square_mat inverse()
+            static row_op exchange(size_t row_1, size_t row_2)
             {
-
+                return [row_1, row_2]( Col& a ) {
+                    T tmp = a[row_1];
+                    a[row_1] = a[row_2];
+                    a[row_2] = tmp;
+                };
             }
 
-            constexpr static square_mat identity()
+            static row_op scale(size_t row, T scalar)
             {
-                mat<N, vec<N, T>> res{};
+                return [row, scalar]( Col& a ) {
+                    a[row] *= scalar;
+                };
+            }
+
+            static row_op add_row(size_t this_row, size_t other_row, T scalar)
+            {
+                return [this_row, other_row, scalar]( Col& a ) {
+                    a[this_row] += scalar * a[other_row];
+                };
+            }
+
+            // destructively LUP-decomposes this matrix. Entries below the main
+            // diagonal are part of L, and the main diagonal and above are part
+            // of U, with the maindiagonal of L understood to all be 1. In short
+            // converts this matrix to L + U - I, returning a vector of pivots
+            // representing the filled columns in the permutation matrix.
+            constexpr vec<N, size_t> LUPdecompose()
+            {
+                static_assert( is_field_v<T> && M == N,
+                               "This method only makes sense on square matrices"
+                               "over fields." );
+
+                std::vector<row_op> row_ops;
+                vec<N, size_t> pivots;
+                for( size_t i = 0;  i < N; ++i )
+                    pivots[i] = i;
+
+                auto partial_pivot = [&row_ops, &pivots]( Col& a_i, size_t pivot_idx ) {
+                    for ( size_t row = pivot_idx + 1; row < N; ++row ) {
+                        if( a_i[row] != 0 ) {
+                            row_ops.push_back( exchange( pivot_idx, row ) );
+                            row_ops.back( )( a_i );
+                            size_t tmp = pivots[row];
+                            pivots[row] = pivots[pivot_idx];
+                            pivots[pivot_idx] = tmp;
+                            break;
+                        }
+                    }
+                };
+
+                auto add_rows = [&row_ops]( Col& a_i, size_t pivot_idx ) {
+                    T denom = 1 / a_i[pivot_idx];
+                    for( size_t row = pivot_idx + 1; row < N; ++row ) {
+                        T scalar = a_i[row] * denom;
+                        row_ops.push_back( add_row( row, pivot_idx, -scalar ) );
+                        a_i[row] = scalar;
+                    }
+                };
+
+                for (size_t i = 0; i < N; ++i)
+                {
+                    Col& col = ( *this )[i];
+                    for( auto op : row_ops ) {
+                        op( col );
+                    }
+                    if ( col[i] == 0 ) {
+                        partial_pivot( col, i );
+                        if (col[i] == 0 )
+                            continue;
+                    }
+                    add_rows( col, i );
+                }
+
+                return pivots;
+            }
+
+            // destructively converts this matrix to its inverse, if one exists
+            constexpr void invert( )
+            {
+                // inverse matrices probably don't make sense unless our field has
+                // inverses. specialize is_field if you disagree.
+                static_assert( is_field_v<T> && M == N,
+                               "This method only makes sense on square matrices"
+                               "over fields." );
+
+                auto copy = *this;
+                auto pivots = copy.LUPdecompose( );
+
+                for( size_t col = 0; col < N; ++col )
+                {
+                    Col ycol{ };
+                    ycol[pivots[col]] = 1;
+                    for( size_t row = pivots[col] + 1; row < N; ++row )
+                    {
+                        T sum = 0;
+                        for( size_t i = pivots[col]; i < row; ++i )
+                        {
+                            sum += copy[i][row] * ycol[i];
+                        }
+                        ycol[row] = -sum;
+                    }
+
+                    Col& xcol = ( *this )[col];
+                    for( size_t row = N; row-- > 0; )
+                    {
+                        T sum = 0;
+                        for( size_t i = N - 1; i > row; --i) {
+                            sum += copy[i][row] * xcol[i];
+                        }
+                        // avoid signed zero
+                        if (sum == ycol[row]) {
+                            xcol[row] = 0;
+                        }
+                        else {
+                            xcol[row] = ( ycol[row] - sum ) / copy[row][row];
+                        }
+                    }
+                }
+            }
+
+            // return the inverse of this matrix
+            constexpr mat<N, Col> inverse( ) const
+            {
+                static_assert( is_field_v<T> && M == N,
+                               "This method only makes sense on square matrices"
+                               "over fields." );
+
+                mat<N, Col> cpy;
+                std::copy( this->data( ), std::next( this->data( ), N ), cpy.data( ) );
+                cpy.invert( );
+                return cpy;
+            }
+
+            constexpr static mat<N, Col> identity( )
+            {
+                static_assert( M == N,
+                               "identity generally only exists for square matrices" );
+                mat<N, vec<N, T>> res{ };
                 for (size_t i = 0; i < N; ++i)
                     res[i][i] = static_cast<T>(1);
                 return res;

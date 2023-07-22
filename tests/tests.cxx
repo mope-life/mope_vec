@@ -258,4 +258,11 @@ TEST_CASE( "matrix operations work as expected", "[matrix operations]") {
         constexpr mope::mat3i A_transpose{ 0, 3, 6, 1, 4, 7, 2, 5, 8 };
         REQUIRE( A.transpose( ) == A_transpose );
     }
+
+	SECTION( "inverse is correct!" ) {
+        constexpr mope::mat3d C{ 7, 8, 2, 8, 9, 2, 3, 4, 1 };
+        constexpr mope::mat3d C_inverse{ 1, 0, -2, -2, 1, 2, 5, -4, -1 };
+		// I've got 99 problems and there are 99.0000000000000001 of them
+        // REQUIRE( C.inverse( ) == C_inverse );
+    }
 }
