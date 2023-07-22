@@ -1,0 +1,83 @@
+Language: Cpp
+BasedOnStyle: LLVM
+
+# tabs
+UseTab: Never
+IndentWidth: 4
+TabWidth: 4
+
+# includes
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '<[^\./]+>'
+    Priority: 2
+  - Regex: '<[^\.]+>'
+    Priority: 3
+  - Regex: '<.+>'
+    Priority: 4
+  - Regex: '"[^/]+\.h(xx|pp|h)"'
+    Priority: 5
+  - Regex: '".+\.h(xx|pp|h)"'
+    Priority: 6
+  - Regex: '"[^/]+\.h'
+    Priority: 7
+
+# breaks
+ColumnLimit: 0
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: All
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: AfterComma
+BreakStringLiterals: true
+EmptyLineBeforeAccessModifier: LogicalBlock
+SeperateDefinitionBlocks: Always
+
+# brace wrapping
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: true
+  AfterControlStatement: MultiLine
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: true
+
+# spaces
+Cpp11BracedListStyle: false
+PointerAlignment: Right
+ReferenceAlignment: Left
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: Never
+SpaceInEmptyBlock: true
+SpaceInEmptyParentheses: true
+SpacesInParentheses: true
+
+# alignment
+IndentCaseLabels: false
+AccessModifierOffset: -4
+NamespaceIndentation: All
+AlignOperands: AlignAfterOperator
+
+# misc
+FixNamespaceComments: true
+InsertBraces: true
