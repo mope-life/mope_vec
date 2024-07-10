@@ -46,7 +46,6 @@ namespace mope
 
     namespace detail
     {
-
         template <typename T>
         struct is_field_helper
             : public std::conditional_t<std::is_floating_point_v<T>, std::true_type, std::false_type>
@@ -72,7 +71,7 @@ namespace mope
     {
         // this non-constexpr function is called from constructors in order
         // to trigger a compiler error
-        void too_many_elements( ) { }
+        inline void too_many_elements( ) { }
 
         /*====================================================================*\
         |  _base:                                                              |
@@ -362,7 +361,7 @@ namespace mope
             {
                 L.size( ) <= M *N ? (void)0 : too_many_elements( );
                 auto iter = L.begin( );
-                auto remaining = std::distance( iter, L.end( ) );
+                auto remaining = static_cast<size_t>( std::distance( iter, L.end( ) ) );
                 for( size_t idx = 0; remaining > 0; ++idx ) {
                     auto dist = M < remaining ? M : remaining;
                     std::copy( iter, std::next( iter, dist ), ( *this )[idx].data( ) );
