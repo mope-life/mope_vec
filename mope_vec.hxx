@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <cstring>
+#include <cstdint>
 #include <functional>
 #include <iostream>
 #include <type_traits>
